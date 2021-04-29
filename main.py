@@ -37,21 +37,43 @@ def random_cafe():
     # get a random cafe from the database
     all_cafes = db.session.query(Cafe).all()
     rand_cafe = random.choice(all_cafes)
-    # turn the random cafe SQLAlchemy Object into JSON
-    cafe = {
-        'id': rand_cafe.id,
-        'name': rand_cafe.name,
-        'map_url': rand_cafe.map_url,
-        'img_url': rand_cafe.img_url,
-        'location': rand_cafe.location,
-        'seats': rand_cafe.seats,
-        'has_toilet': rand_cafe.has_toilet,
-        'has_wifi': rand_cafe.has_wifi,
-        'has_sockets': rand_cafe.has_sockets,
-        'can_take_calls': rand_cafe.can_take_calls,
-        'coffee_price': rand_cafe.coffee_price,
-    }
-    return jsonify(cafe=cafe)
+    # Turn the random cafe SQLAlchemy Object into a JSON Response object
+
+    # The original manual dictionary method
+    # cafe = {
+    #     'id': rand_cafe.id,
+    #     'name': rand_cafe.name,
+    #     'map_url': rand_cafe.map_url,
+    #     'img_url': rand_cafe.img_url,
+    #     'location': rand_cafe.location,
+    #     'seats': rand_cafe.seats,
+    #     'has_toilet': rand_cafe.has_toilet,
+    #     'has_wifi': rand_cafe.has_wifi,
+    #     'has_sockets': rand_cafe.has_sockets,
+    #     'can_take_calls': rand_cafe.can_take_calls,
+    #     'coffee_price': rand_cafe.coffee_price,
+    # }
+    # return jsonify(cafe=cafe)
+
+    # This method saves me having to manually type out the dictionary
+    cafe = jsonify(
+        # jsonify the dictionary
+        cafe=jsonify(
+            # jsonify the cafe data
+            id=rand_cafe.id,
+            name=rand_cafe.name,
+            map_url=rand_cafe.map_url,
+            img_url=rand_cafe.img_url,
+            location=rand_cafe.location,
+            seats=rand_cafe.seats,
+            has_toilet=rand_cafe.has_toilet,
+            has_wifi=rand_cafe.has_wifi,
+            has_sockets=rand_cafe.has_sockets,
+            can_take_calls=rand_cafe.can_take_calls,
+            coffee_price=rand_cafe.coffee_price,
+        ).json  # convert the Response object to a dictionary
+    )
+    return cafe
 
 
 #  HTTP POST - Create Record
