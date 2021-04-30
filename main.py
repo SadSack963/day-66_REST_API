@@ -25,6 +25,25 @@ class Cafe(db.Model):
     can_take_calls = db.Column(db.Boolean, nullable=False)
     coffee_price = db.Column(db.String(250), nullable=True)
 
+    def to_dict(self):
+        # # Method 1.
+        # dictionary = {}
+        # # Loop through each column in the data record
+        # for column in self.__table__.columns:
+        #     # Create a new dictionary entry;
+        #     # where the key is the name of the column
+        #     # and the value is the value of the column
+        #     dictionary[column.name] = getattr(self, column.name)
+        # return dictionary
+
+        # Method 2. Alternatively use Dictionary Comprehension to do the same thing.
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
+
+# TODO: Convert the cafe data to a dictionary
+def cafe_to_dict(id):
+
+    pass
 
 @app.route("/")
 def home():
@@ -39,7 +58,7 @@ def random_cafe():
     rand_cafe = random.choice(all_cafes)
     # Turn the random cafe SQLAlchemy Object into a JSON Response object
 
-    # The original manual dictionary method
+    # # The original manual dictionary method
     # cafe = {
     #     'id': rand_cafe.id,
     #     'name': rand_cafe.name,
@@ -55,26 +74,29 @@ def random_cafe():
     # }
     # return jsonify(cafe=cafe)
 
-    # This method saves me having to manually type out the dictionary
-    cafe = jsonify(
-        # jsonify the dictionary
-        cafe=jsonify(
-            # jsonify the cafe data
-            id=rand_cafe.id,
-            name=rand_cafe.name,
-            map_url=rand_cafe.map_url,
-            img_url=rand_cafe.img_url,
-            location=rand_cafe.location,
-            seats=rand_cafe.seats,
-            has_toilet=rand_cafe.has_toilet,
-            has_wifi=rand_cafe.has_wifi,
-            has_sockets=rand_cafe.has_sockets,
-            can_take_calls=rand_cafe.can_take_calls,
-            coffee_price=rand_cafe.coffee_price,
-        ).json  # convert the Response object to a dictionary
-    )
-    return cafe
+    # # This method saves me having to manually type out the dictionary
+    # cafe = jsonify(
+    #     # jsonify the dictionary
+    #     cafe=jsonify(
+    #         # jsonify the cafe data
+    #         id=rand_cafe.id,
+    #         name=rand_cafe.name,
+    #         map_url=rand_cafe.map_url,
+    #         img_url=rand_cafe.img_url,
+    #         location=rand_cafe.location,
+    #         seats=rand_cafe.seats,
+    #         has_toilet=rand_cafe.has_toilet,
+    #         has_wifi=rand_cafe.has_wifi,
+    #         has_sockets=rand_cafe.has_sockets,
+    #         can_take_calls=rand_cafe.can_take_calls,
+    #         coffee_price=rand_cafe.coffee_price,
+    #     ).json  # convert the Response object to a dictionary
+    # )
+    # return cafe
 
+    # Even better solution from Angela: add to_dict() function to the class
+    # Simply convert the random_cafe data record to a dictionary of key-value pairs.
+    return jsonify(cafe=rand_cafe.to_dict())
 
 #  HTTP POST - Create Record
 
