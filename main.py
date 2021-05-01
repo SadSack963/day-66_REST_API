@@ -2,17 +2,22 @@ from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy  # pip install Flask-SQLAlchemy
 import random
 import json
+import os
 
+
+FILE_URL = 'sqlite:///database/cafes.db'
 app = Flask(__name__)
 
 # Connect to Database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///cafes.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = FILE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
 # Cafe TABLE Configuration
 class Cafe(db.Model):
+    # __tablename__ = "Cafes"
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), unique=True, nullable=False)
     map_url = db.Column(db.String(500), nullable=False)
@@ -25,6 +30,7 @@ class Cafe(db.Model):
     can_take_calls = db.Column(db.Boolean, nullable=False)
     coffee_price = db.Column(db.String(250), nullable=True)
 
+    # Angela's method: Convert database record to a dictionary
     def to_dict(self):
         # # Method 1.
         # dictionary = {}
@@ -40,10 +46,10 @@ class Cafe(db.Model):
         return {column.name: getattr(self, column.name) for column in self.__table__.columns}
 
 
-# TODO: Convert the cafe data to a dictionary
-def cafe_to_dict(id):
+# Create the database file and tables
+if not os.path.isfile(FILE_URL):
+    db.create_all()
 
-    pass
 
 @app.route("/")
 def home():
@@ -52,25 +58,25 @@ def home():
 
 #  HTTP GET - Read Record
 @app.route("/random", methods=["GET"])
-def random_cafe():
+def get_random_cafe():
     # get a random cafe from the database
     all_cafes = db.session.query(Cafe).all()
-    rand_cafe = random.choice(all_cafes)
+    random_cafe = random.choice(all_cafes)
     # Turn the random cafe SQLAlchemy Object into a JSON Response object
 
     # # The original manual dictionary method
     # cafe = {
     #     'id': rand_cafe.id,
-    #     'name': rand_cafe.name,
-    #     'map_url': rand_cafe.map_url,
-    #     'img_url': rand_cafe.img_url,
-    #     'location': rand_cafe.location,
-    #     'seats': rand_cafe.seats,
-    #     'has_toilet': rand_cafe.has_toilet,
-    #     'has_wifi': rand_cafe.has_wifi,
-    #     'has_sockets': rand_cafe.has_sockets,
-    #     'can_take_calls': rand_cafe.can_take_calls,
-    #     'coffee_price': rand_cafe.coffee_price,
+    #     'name': random_cafe.name,
+    #     'map_url': random_cafe.map_url,
+    #     'img_url': random_cafe.img_url,
+    #     'location': random_cafe.location,
+    #     'seats': random_cafe.seats,
+    #     'has_toilet': random_cafe.has_toilet,
+    #     'has_wifi': random_cafe.has_wifi,
+    #     'has_sockets': random_cafe.has_sockets,
+    #     'can_take_calls': random_cafe.can_take_calls,
+    #     'coffee_price': random_cafe.coffee_price,
     # }
     # return jsonify(cafe=cafe)
 
@@ -79,24 +85,54 @@ def random_cafe():
     #     # jsonify the dictionary
     #     cafe=jsonify(
     #         # jsonify the cafe data
-    #         id=rand_cafe.id,
-    #         name=rand_cafe.name,
-    #         map_url=rand_cafe.map_url,
-    #         img_url=rand_cafe.img_url,
-    #         location=rand_cafe.location,
-    #         seats=rand_cafe.seats,
-    #         has_toilet=rand_cafe.has_toilet,
-    #         has_wifi=rand_cafe.has_wifi,
-    #         has_sockets=rand_cafe.has_sockets,
-    #         can_take_calls=rand_cafe.can_take_calls,
-    #         coffee_price=rand_cafe.coffee_price,
+    #         id=random_cafe.id,
+    #         name=random_cafe.name,
+    #         map_url=random_cafe.map_url,
+    #         img_url=random_cafe.img_url,
+    #         location=random_cafe.location,
+    #         seats=random_cafe.seats,
+    #         has_toilet=random_cafe.has_toilet,
+    #         has_wifi=random_cafe.has_wifi,
+    #         has_sockets=random_cafe.has_sockets,
+    #         can_take_calls=random_cafe.can_take_calls,
+    #         coffee_price=random_cafe.coffee_price,
     #     ).json  # convert the Response object to a dictionary
     # )
     # return cafe
 
     # Even better solution from Angela: add to_dict() function to the class
     # Simply convert the random_cafe data record to a dictionary of key-value pairs.
-    return jsonify(cafe=rand_cafe.to_dict())
+    return jsonify(cafe=random_cafe.to_dict())
+
+
+@app.route("/all", methods=["GET"])
+def get_all_cafes():
+    # get all cafes from the database
+    all_cafes = db.session.query(Cafe).all()
+    # combine into a list of dictionaries
+    all_cafes_dict = [cafe.to_dict() for cafe in all_cafes]
+    """
+    {
+      "all_cafes": [
+        {
+          "can_take_calls": true, 
+          "coffee_price": "\u00a32.40", 
+          "has_sockets": true, 
+          "has_toilet": true, 
+          "has_wifi": false, 
+          "id": 1, 
+          "img_url": "https://atlondonbridge.com/wp-content/uploads/2019/02/Pano_9758_9761-Edit-190918_LTS_Science_Gallery-Medium-Crop-V2.jpg", 
+          "location": "London Bridge", 
+          "map_url": "https://g.page/scigallerylon?share", 
+          "name": "Science Gallery London", 
+          "seats": "50+"
+        }, 
+        ...
+      ]
+    }
+    """
+    return jsonify(all_cafes=all_cafes_dict)
+
 
 #  HTTP POST - Create Record
 
