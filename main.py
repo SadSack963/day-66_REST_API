@@ -102,7 +102,7 @@ def get_random_cafe():
 
     # Even better solution from Angela: add to_dict() function to the class
     # Simply convert the random_cafe data record to a dictionary of key-value pairs.
-    return jsonify(cafe=random_cafe.to_dict())
+    return jsonify(cafes=random_cafe.to_dict())
 
 
 @app.route("/all", methods=["GET"])
@@ -131,7 +131,21 @@ def get_all_cafes():
       ]
     }
     """
-    return jsonify(all_cafes=all_cafes_dict)
+    return jsonify(cafes=all_cafes_dict)
+
+
+@app.route("/search", methods=["GET"])
+def find_cafes():
+    # Get value from URL query string e.g. http://127.0.0.1:5006/search?loc=Peckham
+    # https://flask.palletsprojects.com/en/1.1.x/api/#flask.Request.args
+    location = request.args.get('loc')
+    found_cafes = db.session.query(Cafe).filter_by(location=location).all()
+    if not found_cafes:
+        found_cafes_dict = {"Not Found": "Sorry, we don't have a cafe at that location."}
+    else:
+        # combine into a list of dictionaries
+        found_cafes_dict = [cafe.to_dict() for cafe in found_cafes]
+    return jsonify(cafes=found_cafes_dict)
 
 
 #  HTTP POST - Create Record
