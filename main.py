@@ -51,12 +51,15 @@ if not os.path.isfile(FILE_URL):
     db.create_all()
 
 
+# HOME PAGE
+
 @app.route("/")
 def home():
     return render_template("index.html")
     
 
-#  HTTP GET - Read Record
+#  HTTP GET - Read Records
+
 @app.route("/random", methods=["GET"])
 def get_random_cafe():
     # get a random cafe from the database
@@ -150,7 +153,44 @@ def find_cafes():
 
 #  HTTP POST - Create Record
 
+@app.route("/add", methods=["POST"])
+def add_cafe():
+    def check_bool(value):
+        return 1 if value == '1' or value.lower() == 'true' else 0
+
+    # Get field values from request body and create a new Cafe object
+    # request.form returns an immutable dictionary
+    # the boolean values must be blank, 0 or 1
+    data = request.form
+    new_cafe = Cafe(
+        name=data['name'],
+        map_url=data['map_url'],
+        img_url=data['img_url'],
+        location=data['location'],
+        seats=data['seats'],
+        has_toilet=check_bool(data['has_toilet']),
+        has_wifi=check_bool(data['has_wifi']),
+        has_sockets=check_bool(data['has_sockets']),
+        can_take_calls=check_bool(data['can_take_calls']),
+        coffee_price=data['coffee_price'],
+    )
+    # Check if cafe is already in the database
+    search_cafe = db.session.query(Cafe).filter_by(
+        name=new_cafe.name,
+        location= new_cafe.location
+    ).all()
+    if search_cafe:
+        response = {"fail": "Cafe already exists."}
+    else:
+        # Add cafe to database
+        db.session.add(new_cafe)
+        db.session.commit()
+        response = {"success": "Successfully added the new cafe."}
+    return jsonify(response=response)
+
+
 #  HTTP PUT/PATCH - Update Record
+
 
 #  HTTP DELETE - Delete Record
 
