@@ -63,13 +63,14 @@ def home():
 @app.route("/random", methods=["GET"])
 def get_random_cafe():
     # get a random cafe from the database
+    # Select all results from the search <class 'flask_sqlalchemy.BaseQuery'>
     all_cafes = db.session.query(Cafe).all()
     random_cafe = random.choice(all_cafes)
     # Turn the random cafe SQLAlchemy Object into a JSON Response object
 
     # # The original manual dictionary method
     # cafe = {
-    #     'id': rand_cafe.id,
+    #     'id': random_cafe.id,
     #     'name': random_cafe.name,
     #     'map_url': random_cafe.map_url,
     #     'img_url': random_cafe.img_url,
@@ -105,12 +106,14 @@ def get_random_cafe():
 
     # Even better solution from Angela: add to_dict() function to the class
     # Simply convert the random_cafe data record to a dictionary of key-value pairs.
-    return jsonify(cafes=random_cafe.to_dict())
+    # 200 	OK 	Action completed successfully
+    return jsonify(cafes=random_cafe.to_dict()), 200
 
 
 @app.route("/all", methods=["GET"])
 def get_all_cafes():
     # get all cafes from the database
+    # Select all results from the search <class 'flask_sqlalchemy.BaseQuery'>
     all_cafes = db.session.query(Cafe).all()
     # combine into a list of dictionaries
     all_cafes_dict = [cafe.to_dict() for cafe in all_cafes]
@@ -134,7 +137,8 @@ def get_all_cafes():
       ]
     }
     """
-    return jsonify(cafes=all_cafes_dict)
+    # 200 	OK 	Action completed successfully
+    return jsonify(cafes=all_cafes_dict), 200
 
 
 @app.route("/search", methods=["GET"])
@@ -142,13 +146,15 @@ def find_cafes():
     # Get value from URL query string e.g. http://127.0.0.1:5006/search?loc=Peckham
     # https://flask.palletsprojects.com/en/1.1.x/api/#flask.Request.args
     location = request.args.get('loc')
+    # Select all results from the search <class 'flask_sqlalchemy.BaseQuery'>
     found_cafes = db.session.query(Cafe).filter_by(location=location).all()
-    if not found_cafes:
-        found_cafes_dict = {"Not Found": "Sorry, we don't have a cafe at that location."}
-    else:
+    if found_cafes:
         # combine into a list of dictionaries
-        found_cafes_dict = [cafe.to_dict() for cafe in found_cafes]
-    return jsonify(cafes=found_cafes_dict)
+        # 200 	OK 	Action completed successfully
+        return jsonify(cafes=[cafe.to_dict() for cafe in found_cafes]), 200
+    else:
+        # 404 	Not Found 	Requested file was not found
+        return jsonify(error={"Not Found": "Sorry, we don't have a cafe at that location."}), 404
 
 
 #  HTTP POST - Create Record
@@ -159,7 +165,7 @@ def add_cafe():
         return 1 if value == '1' or value.lower() == 'true' else 0
 
     # Get field values from request body and create a new Cafe object
-    # request.form returns an immutable dictionary
+    # request.form returns an immutable dictionary (ImmutableMultiDict)
     # the boolean values must be blank, 0 or 1
     data = request.form
     new_cafe = Cafe(
@@ -175,21 +181,45 @@ def add_cafe():
         coffee_price=data['coffee_price'],
     )
     # Check if cafe is already in the database
+    # Select all results from the search <class 'flask_sqlalchemy.BaseQuery'>
     search_cafe = db.session.query(Cafe).filter_by(
         name=new_cafe.name,
-        location= new_cafe.location
+        location=new_cafe.location
     ).all()
     if search_cafe:
-        response = {"fail": "Cafe already exists."}
+        # 400 	Bad Request
+        # Request had bad syntax or was impossible to fulfill
+        return jsonify(error={"exists": "Cafe already exists."}), 400
     else:
         # Add cafe to database
         db.session.add(new_cafe)
         db.session.commit()
-        response = {"success": "Successfully added the new cafe."}
-    return jsonify(response=response)
+        # 200 	OK 	Action completed successfully
+        return jsonify(response={"success": "Successfully added the new cafe."}), 200
 
 
 #  HTTP PUT/PATCH - Update Record
+
+@app.route("/update-price/<cafe_id>", methods=["PATCH"])
+def update_price(cafe_id):
+    # Get value from URL query string e.g. http://127.0.0.1:5006/search?loc=Peckham
+    # https://flask.palletsprojects.com/en/1.1.x/api/#flask.Request.args
+    new_price = request.args.get('new-price')
+    # Select the first match from the search: <class 'flask_sqlalchemy.BaseQuery'>
+    cafe = db.session.query(Cafe).filter_by(
+        id=int(cafe_id),
+    ).first()
+    # Angela used:
+    # cafe = db.session.query(Cafe).get(cafe_id)
+    if cafe:
+        # print("cafe =", cafe, type(cafe))  # >>> cafe = <Cafe 22> <class '__main__.Cafe'>
+        cafe.coffee_price = new_price
+        db.session.commit()
+        # 200 	OK 	Action completed successfully
+        return jsonify(response={"success": f"Price updated to {cafe.coffee_price} for {cafe.name}."}), 200
+    else:
+        # 404 	Not Found 	Requested file was not found
+        return jsonify(error={"Not Found": f"A cafe with ID={cafe_id} was not found."}), 404
 
 
 #  HTTP DELETE - Delete Record
