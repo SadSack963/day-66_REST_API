@@ -224,6 +224,28 @@ def update_price(cafe_id):
 
 #  HTTP DELETE - Delete Record
 
+@app.route("/report-closed/<cafe_id>", methods=["DELETE"])
+def delete_cafe(cafe_id):
+    API_KEY = "MySecretAPIKey"
+    key_data = request.form['api-key']
+    if key_data == API_KEY:
+        # delete the entry
+        cafe = db.session.query(Cafe).get(cafe_id)
+        if cafe:
+            db.session.delete(cafe)
+            db.session.commit()
+            # 200 	OK 	Action completed successfully
+            return jsonify(response={"success": f"Cafe {cafe.name} removed from database."}), 200
+        else:
+            # 404 	Not Found 	Requested file was not found
+            return jsonify(error={"Not Found": f"A cafe with ID={cafe_id} was not found."}), 404
+    else:
+        # 403 	Forbidden
+        # Request does not specify the file name, or the directory
+        # or the file does not have the permission that allows the pages to be viewed from the web
+        return jsonify(error={"Forbidden": "Not Authorized to delete a cafe."}), 403
+    pass
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5006)
