@@ -1,12 +1,52 @@
+import flask.json
 from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy  # pip install Flask-SQLAlchemy
 import random
 import json
 import os
 
+# The API documentation is viewable at https://documenter.getpostman.com/view/15623189/TzRNEV41
 
+
+API_KEY = "MySecretAPIKey"
 FILE_URL = 'sqlite:///database/cafes.db'
 app = Flask(__name__)
+
+"""
+    DEFAULT FLASK APP CONFIGURATION
+    ===============================
+    default_config = {
+        'APPLICATION_ROOT': '/',
+        'DEBUG': None,
+        'ENV': None,
+        'EXPLAIN_TEMPLATE_LOADING': False,
+        'JSONIFY_MIMETYPE': 'application/json',
+        'JSONIFY_PRETTYPRINT_REGULAR': False,
+        'JSON_AS_ASCII': True,
+        'JSON_SORT_KEYS': True,
+        'MAX_CONTENT_LENGTH': None,
+        'MAX_COOKIE_SIZE': 4093,
+        'PERMANENT_SESSION_LIFETIME': datetime.timedelta(days = 31),
+        'PREFERRED_URL_SCHEME': 'http',
+        'PRESERVE_CONTEXT_ON_EXCEPTION': None,
+        'PROPAGATE_EXCEPTIONS': None,
+        'SECRET_KEY': None,
+        'SEND_FILE_MAX_AGE_DEFAULT': None,
+        'SERVER_NAME': None,
+        'SESSION_COOKIE_DOMAIN': None,
+        'SESSION_COOKIE_HTTPONLY': True,
+        'SESSION_COOKIE_NAME': 'session',
+        'SESSION_COOKIE_PATH': None,
+        'SESSION_COOKIE_SAMESITE': None,
+        'SESSION_COOKIE_SECURE': False,
+        'SESSION_REFRESH_EACH_REQUEST': True,
+        'TEMPLATES_AUTO_RELOAD': None,
+        'TESTING': False,
+        'TRAP_BAD_REQUEST_ERRORS': None,
+        'TRAP_HTTP_EXCEPTIONS': False,
+        'USE_X_SENDFILE': False
+    }
+"""
 
 # Connect to Database
 app.config['SQLALCHEMY_DATABASE_URI'] = FILE_URL
@@ -226,7 +266,6 @@ def update_price(cafe_id):
 
 @app.route("/report-closed/<cafe_id>", methods=["DELETE"])
 def delete_cafe(cafe_id):
-    API_KEY = "MySecretAPIKey"
     key_data = request.form['api-key']
     if key_data == API_KEY:
         # delete the entry
